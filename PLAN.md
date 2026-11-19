@@ -37,6 +37,8 @@ unconfirmed. The stranded-branch list names exact commits.
 
 ### M2 — Shared runner
 
+**Status:** Complete. Shared runner, stage contract, offline regression tests, and mutation checks.
+
 - One `scripts/local-ci.sh` core: stage runner, clean-tree check,
   unchanged-HEAD check before signoff, option handling, signoff.
 - Each repository supplies only its stages through a small stage file.
