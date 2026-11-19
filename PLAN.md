@@ -61,6 +61,8 @@ network access at check time, or the trade-off is stated plainly.
 
 ### M4 — Pilot migration
 
+**Status:** Complete. Prepared a homebrew-tap patch and verified it in temporary clones. Workflow lint and formula syntax passed, and install command sequences matched with stubs.
+
 - Migrate the smallest repository that has the script, in a temp clone.
 - Keep it as a patch in `docs/pilot/` with before and after behaviour.
 
