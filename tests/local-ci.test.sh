@@ -12,6 +12,7 @@ set -uo pipefail
 here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 RUNNER="${RUNNER:-$here/../scripts/local-ci.sh}"
 RUNNER="$(readlink -f -- "$RUNNER")"
+VENDOR="$here/../scripts/vendor-local-ci.sh"
 ONLY="${1:-}"
 REAL_GIT="$(command -v git)"
 REAL_READLINK="$(command -v readlink)"
@@ -681,6 +682,27 @@ test_edited_vendored_runner_is_refused() {
   out_has "does not match local-ci.sha256"
 }
 
+test_vendor_script_installs_and_detects_drift() {
+  one_stage | new_repo
+  rm "$T/repo/scripts/local-ci.sh"
+  OUT="$("$VENDOR" install "$T/repo" 2>&1)"; RC=$?
+  ok_exit
+  cmp -s "$T/repo/scripts/local-ci.sh" "$here/../scripts/local-ci.sh" || _no "installed runner differs from the kit's"
+  ( cd "$T/repo/scripts" && sha256sum --check --status local-ci.sha256 ) || _no "installed checksum does not verify"
+  [ -x "$T/repo/scripts/local-ci.sh" ] || _no "installed runner is not executable"
+  OUT="$("$VENDOR" check "$T/repo" 2>&1)"; RC=$?
+  ok_exit; out_has "in sync"
+  printf 'invalid checksum\n' > "$T/repo/scripts/local-ci.sha256"
+  OUT="$("$VENDOR" check "$T/repo" 2>&1)"; RC=$?
+  bad_exit; out_has "DIFFERS"
+  "$VENDOR" install "$T/repo" >/dev/null || _no "could not restore the vendored runner"
+  printf '\n# drift\n' >> "$T/repo/scripts/local-ci.sh"
+  OUT="$("$VENDOR" check "$T/repo" 2>&1)"; RC=$?
+  bad_exit; out_has "DIFFERS"
+  rm "$T/repo/scripts/local-ci.sh"
+  OUT="$("$VENDOR" check "$T/repo" 2>&1)"; RC=$?
+  bad_exit; out_has "MISSING"
+}
 
 # ── main ─────────────────────────────────────────────────────────────────────
 

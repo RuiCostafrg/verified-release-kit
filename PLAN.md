@@ -50,6 +50,8 @@ an unresolvable script path, and the `install` stage-name collision.
 
 ### M3 — Consumption model
 
+**Status:** Complete. Vendoring is the recommendation. Offline checks compare against a trusted local kit revision.
+
 - Recommend one way for repositories to consume the runner: vendored copy
   with a sync check, pinned download, or submodule.
 - Implement the tooling for the recommended one only.

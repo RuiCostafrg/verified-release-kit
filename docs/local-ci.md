@@ -81,7 +81,7 @@ makes that test fail.
 ## Running the tests
 
 ```bash
-tests/local-ci.test.sh            # 38 tests, no network
+tests/local-ci.test.sh            # 39 tests, no network
 tests/mutants.sh                  # reverts each fix in turn; every mutant must be killed
 RUNNER=/path/to/other/local-ci.sh tests/local-ci.test.sh   # point the suite at another copy
 ```
