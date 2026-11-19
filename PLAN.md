@@ -82,6 +82,8 @@ patch is not pushed.
 
 ### M6 — Release verification scripts (survey)
 
+**Status:** Complete. Ranked the shared release verification candidates and recorded the move from npm to NuGet in dotnet-crap.
+
 - Compare the published-release verification scripts in `typescript-crap` and
   `dotnet-crap` and list what could be shared.
 
