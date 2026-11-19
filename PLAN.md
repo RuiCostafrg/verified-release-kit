@@ -71,6 +71,8 @@ patch is not pushed.
 
 ### M5 — Verified Homebrew sync proposal
 
+**Status:** Complete. Proposed reusable read-only provenance verification with the existing tap-owned approval and publishing jobs.
+
 - A written proposal for a reusable workflow: inputs, permissions, the
   provenance checks it performs, and the approval gate.
 - What `homebrew-tap` and `homebrew-oximut` would change to adopt it, and the
