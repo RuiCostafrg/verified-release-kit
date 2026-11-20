@@ -42,14 +42,11 @@ passed after increasing its fixture deadline from 20 to 60 seconds. The
 migration patch accepts
 `PI_DROID_TEST_TIMEOUT_MS` for slow machines and preserves the default
 30-second deadline. All 63 unit-test files passed across batches and
-serial retries, covering 864 tests. Eight of nine integration checks
-passed in the last run. The package install satisfied the assertions
-once, but that run had a Vitest worker error. Switching npm subprocesses
-to asynchronous execution removed the worker error in the next run,
-which hit the package-install test deadline. A clean pass for that test
-still needs confirmation. The post-review offline retry also timed out
-on the install test. The final isolated extension fixture passed all
-seven tests with the package metadata and runtime files in place.
+serial retries, covering 864 tests. All nine integration checks passed
+together after the sandbox fixture stopped installing Pi's host peer
+dependencies. The sandbox installs the tarball and its own dependencies
+through npm. The isolated extension fixture exercises loading with the
+host dependencies and the package metadata and runtime files in place.
 Fantastic Pi Mobile's bridge suite passed 67 of 69 tests before and
 after the patch on this machine. The same test in
 `bridge/test/review.test.js` failed with “Session is closed” in both runs.
@@ -77,10 +74,12 @@ two local runs. The Python suite had three skips, the Rust debug and
 release suites passed, and lint and security passed. TypeScript's lint,
 documentation, package listing and security checks passed. Its runtime
 suite hit the Rust pipeline panic-ordering test's deadline under load.
-That test passed by itself and in a serial run. The serial run later
-failed two Node coverage-config assertions because directory aliases
-returned `ELOOP`. The same failures reproduced on the original checkout
-and when using a different temporary directory on this machine.
+That test passed by itself and in a serial run. The
+[coverage publication patch](typescript-crap-coverage-publish.patch)
+checks the destination after the collector exits and before creating
+staging files, while keeping the final pre-publication check. All 11
+coverage configuration tests passed, including both directory-alias
+cases. The full Node suite passed with 125 tests and one skip.
 Full release checks are outside these local runs.
 
 Apply and test one patch at a time in a disposable checkout of its base.

@@ -125,7 +125,7 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8f902a3c45d31a08a4fc2da9bf96a956
        mockUI: { confirm: true },
        propagateErrors: true,
 diff --git a/tests/integration/sandbox-install.test.ts b/tests/integration/sandbox-install.test.ts
-index 4b28e65e16ea3ef2347529a535aee4e504f01f17..d4d82f282a3436287779902f2e926aef0a14562a 100644
+index 4b28e65e16ea3ef2347529a535aee4e504f01f17..861b11698bce7eb662f2c8bddc6ea3f1455fb233 100644
 --- a/tests/integration/sandbox-install.test.ts
 +++ b/tests/integration/sandbox-install.test.ts
 @@ -7,29 +7,32 @@
@@ -198,12 +198,14 @@ index 4b28e65e16ea3ef2347529a535aee4e504f01f17..d4d82f282a3436287779902f2e926aef
 
        // Create minimal package.json
        writeFileSync(join(sandbox, "package.json"), JSON.stringify({
-@@ -72,7 +72,10 @@ describe("Sandbox install verification", () => {
+@@ -71,8 +71,11 @@ describe("Sandbox install verification", () => {
+         dependencies: { "pi-droid": `file:./${tarball}` },
        }));
 
-       // Install
+-      // Install
 -      execSync("npm install", { cwd: sandbox, stdio: "pipe" });
-+      await exec("npm", ["install", "--no-audit", "--no-fund", "--prefer-offline", "--fetch-retries=0"], {
++      // Pi provides the host peers. This fixture installs the extension and its own dependencies.
++      await exec("npm", ["install", "--omit=peer", "--no-audit", "--no-fund", "--prefer-offline", "--fetch-retries=0"], {
 +        cwd: sandbox,
 +        timeout: 120_000,
 +      });

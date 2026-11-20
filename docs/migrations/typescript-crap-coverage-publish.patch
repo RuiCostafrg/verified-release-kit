@@ -1,0 +1,13 @@
+diff --git a/scripts/coverage-publish.mjs b/scripts/coverage-publish.mjs
+index bf566bcfeafa049a855ad57199127226e5fdc4fe..a9f2f2377aeb665036f96fa45a3bf04eea6a6f2a 100644
+--- a/scripts/coverage-publish.mjs
++++ b/scripts/coverage-publish.mjs
+@@ -49,6 +49,8 @@ export async function publishReport(
+   contents,
+   { replace = false, createParent = false, validate } = {},
+ ) {
++  // The collector may have changed the destination since the initial check.
++  if (validate) await validate();
+   if (createParent) await fs.mkdir(path.dirname(output), { recursive: true });
+   // A random private sibling directory keeps staging on the destination filesystem.
+   const directory = await fs.mkdtemp(path.join(path.dirname(output), ".ts-crap-coverage-"));
