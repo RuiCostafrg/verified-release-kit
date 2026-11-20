@@ -50,7 +50,7 @@ an unresolvable script path, and the `install` stage-name collision.
 
 ### M3 — Consumption model
 
-**Status:** Complete. Vendoring is the recommendation. Offline checks compare against a trusted local kit revision.
+**Status:** Complete. Vendoring was approved for the pilot. Offline checks compare against a trusted local kit revision.
 
 - Recommend one way for repositories to consume the runner: vendored copy
   with a sync check, pinned download, or submodule.
@@ -61,7 +61,7 @@ network access at check time, or the trade-off is stated plainly.
 
 ### M4 — Pilot migration
 
-**Status:** Complete. Prepared a homebrew-tap patch and verified it in temporary clones. Workflow lint and formula syntax passed, and install command sequences matched with stubs.
+**Status:** Complete. Verified the homebrew-tap patch in temporary clones and with Homebrew 7.0.15. Both formulas installed successfully after replacing direct file paths with tap-qualified names.
 
 - Migrate the smallest repository that has the script, in a temp clone.
 - Keep it as a patch in `docs/pilot/` with before and after behaviour.
@@ -97,7 +97,7 @@ patch is not pushed.
 
 ## Decisions for the owner
 
-1. Consumption model.
+1. Whether to roll out vendoring beyond the pilot.
 2. Whether to land the stranded review fixes now, repository by repository,
    before any migration.
 3. Final name and whether this becomes a public repository.

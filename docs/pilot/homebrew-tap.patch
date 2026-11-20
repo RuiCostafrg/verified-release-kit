@@ -1,5 +1,5 @@
 diff --git a/docs/local-ci.md b/docs/local-ci.md
-index cb0f0d4a0468d599f3f7ab746a1cd5b52b69fe53..2f2adf2c85cd1d07311d00de7657cf8a7829f146 100644
+index cb0f0d4a0468d599f3f7ab746a1cd5b52b69fe53..98fd7f175f6afa301ed89f7d8bbaf22401d58cbb 100644
 --- a/docs/local-ci.md
 +++ b/docs/local-ci.md
 @@ -26,10 +26,13 @@ scripts/local-ci.sh install        # brew-install the formula only (skips the wo
@@ -20,6 +20,17 @@ index cb0f0d4a0468d599f3f7ab746a1cd5b52b69fe53..2f2adf2c85cd1d07311d00de7657cf8a
 
  ## Optional: make sign-off a merge requirement
 
+@@ -42,5 +45,8 @@ gh signoff uninstall
+
+ - `workflows` checks every `.github/workflows/*.yml` with actionlint, so
+   `sync.yml` is covered too.
+-- The `install` stage builds against your local tap checkout rather than fetching
+-  the pushed tap ref as CI does; run it as a final acceptance check.
++- The `install` stage loads the formulas by name from the Homebrew checkout. Run
++  it from `$(brew --repository RuiCostafrg/tap)` in a disposable Homebrew prefix
++  with neither formula installed. For a differently named local tap, set
++  `LOCAL_CI_BREW_TAP` to its name. The runner verifies that Homebrew points to
++  the same checkout before installing either formula.
 diff --git a/scripts/local-ci.sh b/scripts/local-ci.sh
 index bbaa5a8827b28706b87dbb425740cb01233c9772..ff9abfd38c55da8b1e50fe84d78f8905bbd95417 100755
 --- a/scripts/local-ci.sh
@@ -373,10 +384,10 @@ index 0000000000000000000000000000000000000000..2797e41cf160a73168d2e85ca084588c
 +430afc27c396d5c293326df24464f2e7c728104f26c92ed7309058bcaf5fd18b  local-ci.sh
 diff --git a/scripts/local-ci.stages.sh b/scripts/local-ci.stages.sh
 new file mode 100644
-index 0000000000000000000000000000000000000000..2ec87235012a0df11675ae140446d1e1e2ae754e
+index 0000000000000000000000000000000000000000..bc771b9604b670539e46e414bea017aa7010c6f7
 --- /dev/null
 +++ b/scripts/local-ci.stages.sh
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,47 @@
 +# Stage definitions for the shared verified-release-kit runner.
 +LOCAL_CI_NAME="homebrew-tap"
 +LOCAL_CI_DESCRIPTION="Mirrors the workflow lint and formula install jobs in .github/workflows/ci.yml."
@@ -410,12 +421,16 @@ index 0000000000000000000000000000000000000000..2ec87235012a0df11675ae140446d1e1
 +}
 +
 +stage_install() {
-+  # Like the CI install job, against the checked-out formula, on Linux Homebrew.
 +  require brew "Homebrew on Linux — https://docs.brew.sh/Homebrew-on-Linux"
 +  export HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1
++  local tap="${LOCAL_CI_BREW_TAP:-RuiCostafrg/tap}" tap_dir formula name
++  tap_dir="$(brew --repository "$tap")"
++  if [ "$(readlink -f -- "$tap_dir")" != "$PWD" ]; then
++    _fail "run the install stage from the Homebrew checkout for $tap: $tap_dir"
++  fi
 +  for formula in Formula/*.rb; do
 +    name=$(basename "$formula" .rb)
-+    brew install --build-from-source "$PWD/$formula"
++    brew install --formula --build-from-source "$tap/$name"
 +    "$name" --version >/dev/null
 +    "$name" --help >/dev/null
 +  done
