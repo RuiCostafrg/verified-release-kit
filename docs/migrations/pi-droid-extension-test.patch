@@ -1,0 +1,113 @@
+diff --git a/tests/integration/extension-load.test.ts b/tests/integration/extension-load.test.ts
+index 21f0c86eea4374f435b2b6efd091cefcc63beea5..e4c7356e632c6be79510ba5ed597d55c4701cece 100644
+--- a/tests/integration/extension-load.test.ts
++++ b/tests/integration/extension-load.test.ts
+@@ -8,12 +8,21 @@
+ import { describe, it, expect, afterEach, beforeAll } from "vitest";
+ import { createTestSession, when, calls, says } from "@marcfargas/pi-test-harness";
+ import type { TestSession } from "@marcfargas/pi-test-harness";
+-import { join } from "path";
++import { execFileSync } from "node:child_process";
++import { join } from "node:path";
+ import { patchAgentForHarness } from "./harness-patch.js";
+
+-const EXTENSION_PATH = join(import.meta.dirname, "../../src/index.ts");
++const ROOT = join(import.meta.dirname, "../..");
++const EXTENSION_PATH = join(ROOT, "dist/index.js");
+
+ beforeAll(() => {
++  // Compile current sources even when the test is run without the build stage.
++  // Load the same entry point Pi uses when the package is installed.
++  execFileSync(process.execPath, [join(ROOT, "node_modules/typescript/bin/tsc")], {
++    cwd: ROOT,
++    stdio: "pipe",
++    timeout: 60_000,
++  });
+   patchAgentForHarness();
+   // The harness replaces the stream function so no real LLM calls happen,
+   // but the session validates API key presence before delegating to the agent.
+diff --git a/tests/integration/sandbox-install.test.ts b/tests/integration/sandbox-install.test.ts
+index 4b28e65e16ea3ef2347529a535aee4e504f01f17..c452253fdca3fc1bee5fbc97b2349acb144ad067 100644
+--- a/tests/integration/sandbox-install.test.ts
++++ b/tests/integration/sandbox-install.test.ts
+@@ -7,14 +7,14 @@
+  * Note: The pi extension loader discovers extensions via its own internal
+  * resolution logic which differs between dev (jiti + TypeScript) and
+  * production (compiled JS). Full extension loading is tested by
+- * extension-load.test.ts using the source entry point.
++ * extension-load.test.ts using the packaged entry point.
+  *
+  * This test verifies the npm package artifact is valid.
+  */
+
+ import { describe, it, expect, beforeAll } from "vitest";
+-import { execSync } from "child_process";
+-import { existsSync, mkdtempSync, rmSync, readFileSync, copyFileSync, writeFileSync } from "fs";
++import { execFileSync } from "node:child_process";
++import { existsSync, mkdtempSync, rmSync, readFileSync, writeFileSync } from "fs";
+ import { join } from "path";
+ import { tmpdir } from "os";
+
+@@ -22,14 +22,15 @@ const PACKAGE_DIR = join(import.meta.dirname, "../..");
+
+ beforeAll(() => {
+   // Ensure dist/ is fresh before packing
+-  execSync("npm run build", { cwd: PACKAGE_DIR, stdio: "pipe" });
++  execFileSync("npm", ["run", "build"], { cwd: PACKAGE_DIR, stdio: "pipe", timeout: 60_000 });
+ });
+
+ describe("Sandbox install verification", () => {
+   it("npm pack produces a valid tarball", () => {
+-    const output = execSync("npm pack --dry-run --json 2>/dev/null || npm pack --dry-run", {
++    const output = execFileSync("npm", ["pack", "--dry-run", "--json"], {
+       cwd: PACKAGE_DIR,
+       encoding: "utf-8",
++      timeout: 45_000,
+     });
+     // Verify key files are present
+     expect(output).toContain("dist/index.js");
+@@ -51,17 +52,13 @@ describe("Sandbox install verification", () => {
+   });
+
+   it("installs cleanly in a sandbox", () => {
+-    // Pack
+-    const tarball = execSync("npm pack", {
+-      cwd: PACKAGE_DIR,
+-      encoding: "utf-8",
+-    }).trim().split("\n").pop()!.trim();
+-    const tarballPath = join(PACKAGE_DIR, tarball);
+-
+     const sandbox = mkdtempSync(join(tmpdir(), "pi-droid-sandbox-"));
+     try {
+-      // Copy tarball to sandbox
+-      copyFileSync(tarballPath, join(sandbox, tarball));
++      const tarball = execFileSync("npm", ["pack", "--pack-destination", sandbox], {
++        cwd: PACKAGE_DIR,
++        encoding: "utf-8",
++        timeout: 45_000,
++      }).trim().split("\n").pop()!.trim();
+
+       // Create minimal package.json
+       writeFileSync(join(sandbox, "package.json"), JSON.stringify({
+@@ -72,7 +69,11 @@ describe("Sandbox install verification", () => {
+       }));
+
+       // Install
+-      execSync("npm install", { cwd: sandbox, stdio: "pipe" });
++      execFileSync("npm", ["install", "--no-audit", "--no-fund", "--prefer-offline", "--fetch-retries=0"], {
++        cwd: sandbox,
++        stdio: "pipe",
++        timeout: 120_000,
++      });
+
+       // Verify installed
+       const pkgDir = join(sandbox, "node_modules/pi-droid");
+@@ -96,7 +97,6 @@ describe("Sandbox install verification", () => {
+       expect(configContent).not.toContain("2960");
+     } finally {
+       rmSync(sandbox, { recursive: true, force: true });
+-      if (existsSync(tarballPath)) rmSync(tarballPath);
+     }
+-  }, 60_000);
++  }, 180_000);
+ });

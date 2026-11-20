@@ -1,8 +1,8 @@
 diff --git a/docs/local-ci.md b/docs/local-ci.md
-index 4b9ef8cd3efda3c0a654764ec97e4176aced01fd..4578b8f55cef3cf87692f3312df0e37a9307a8f8 100644
+index 4b9ef8cd3efda3c0a654764ec97e4176aced01fd..8516ce7121e50a52e6400caa6439a9c7540e0cea 100644
 --- a/docs/local-ci.md
 +++ b/docs/local-ci.md
-@@ -26,6 +26,11 @@ scripts/local-ci.sh --no-signoff   # checks only, no statuses posted
+@@ -26,6 +26,14 @@ scripts/local-ci.sh --no-signoff   # checks only, no statuses posted
  Push your commits first: `gh signoff` only attests pushed work. Failing stages post
  a red `signoff/<stage>` status automatically.
 
@@ -10,6 +10,9 @@ index 4b9ef8cd3efda3c0a654764ec97e4176aced01fd..4578b8f55cef3cf87692f3312df0e37a
 +for this repository live in `scripts/local-ci.stages.sh`. Signoff requires
 +a clean checkout and uses the exact commit tested. Use `--no-signoff`
 +to run the checks on local edits.
++
++On slower local machines, set `PI_DROID_TEST_TIMEOUT_MS` to extend the test
++and hook deadlines. The default is 30000 milliseconds.
 +
  ## Optional: make sign-off a merge requirement
 
@@ -317,10 +320,10 @@ index 0000000000000000000000000000000000000000..2797e41cf160a73168d2e85ca084588c
 +430afc27c396d5c293326df24464f2e7c728104f26c92ed7309058bcaf5fd18b  local-ci.sh
 diff --git a/scripts/local-ci.stages.sh b/scripts/local-ci.stages.sh
 new file mode 100644
-index 0000000000000000000000000000000000000000..7e8bd1df78db56741177c1897e39298fb608cade
+index 0000000000000000000000000000000000000000..be02e6594f3a166bda867405d392b94bb716e55c
 --- /dev/null
 +++ b/scripts/local-ci.stages.sh
-@@ -0,0 +1,11 @@
+@@ -0,0 +1,15 @@
 +# Stage definitions for the shared verified-release-kit runner.
 +LOCAL_CI_NAME="pi-droid"
 +LOCAL_CI_DESCRIPTION="Mirrors .github/workflows/ci.yml (ubuntu-latest test job)."
@@ -331,4 +334,8 @@ index 0000000000000000000000000000000000000000..7e8bd1df78db56741177c1897e39298f
 +
 +stage_lint()  { npm run lint; }
 +stage_build() { npm run build; }
-+stage_tests() { npm run test:ci -- --no-file-parallelism --testTimeout=30000 --hookTimeout=30000; }
++stage_tests() {
++  local timeout_ms="${PI_DROID_TEST_TIMEOUT_MS:-30000}"
++  [[ "$timeout_ms" =~ ^[1-9][0-9]{0,8}$ ]] || _fail "PI_DROID_TEST_TIMEOUT_MS must be a positive number of milliseconds"
++  npm run test:ci -- --no-file-parallelism --testTimeout="$timeout_ms" --hookTimeout="$timeout_ms"
++}

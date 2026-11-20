@@ -29,9 +29,14 @@ during checks so generated caches stay out of the worktree.
 The screenshot stage passed eight tests before and after the patch.
 Pi Droid lint, build, and the 25-test ADB intents suite passed on both
 versions with Linux Node 24. The Android build of Node could not load
-Rollup's native dependency on this machine. The full Linux Vitest runs
-both stopped making progress after the same test file and still need
-a completed run before adoption.
+Rollup's native dependency on this machine. The
+[integration test patch](pi-droid-extension-test.patch) builds from the
+current sources and loads `dist/index.js`, the entry point declared by
+the package. All seven extension tests passed on Linux Node 26 after
+that change. The sandbox install test now bounds its npm subprocesses
+and packs into its own temporary directory. The migration patch also accepts
+`PI_DROID_TEST_TIMEOUT_MS` for slow machines and preserves the default
+30-second deadline. Full-suite results are tracked below.
 Fantastic Pi Mobile's bridge suite passed 67 of 69 tests before and
 after the patch on this machine. The same test in
 `bridge/test/review.test.js` failed with “Session is closed” in both runs.
@@ -40,13 +45,18 @@ test timed out in `bridge/test/project-lifecycle.test.js` on the patched
 runner. A focused log and reliability run passed all three tests in the
 patched checkout. Recheck the full bridge suite on the normal CI
 toolchain before adopting its patch.
-Forge iOS's project validator passed without a Swift compiler. The Swift
-stage and Fantastic Pi Mobile's Android stage still need Swift and a
-Java 17/Android SDK setup, respectively. The .NET Python suite ran 249
-tests with three skips and no failures. Rust formatting also passed in
-both `*-crap` checkouts, and Cargo listed 193 clean files in the
-TypeScript package. Full Rust and release checks remain to be run in
-the consumer repositories before adoption.
+The [bridge test patch](fantastic-pi-mobile-bridge-tests.patch) makes the
+snapshot test wait for a terminal state and joins its pending read
+before closing the store. It also gives the routing fixture a bounded
+elapsed-time deadline. Both cases passed in the Linux Node 26 full rerun,
+which still hit its overall timeout before the review file finished.
+
+Forge iOS passed its full Linux stage with Swift 6.1.3. All 43 tests
+and project validation passed. The .NET default stages passed across
+two local runs. The Python suite had three skips, the Rust debug and
+release suites passed, and lint and security passed. TypeScript's lint,
+documentation, package listing and security checks passed. Full release
+checks are outside these local runs.
 
 Apply and test one patch at a time in a disposable checkout of its base.
 For checks that expect a clean Git tree, such as Cargo's package listing,
