@@ -1,3 +1,13 @@
+diff --git a/tests/adb/capture-envelope-audit.test.ts b/tests/adb/capture-envelope-audit.test.ts
+index 4d3e6d07f658b94a369fe2e2cc1b9a6dae2b4f66..c44a70dcea850a4b8f6a417d672a2e80ca3e551d 100644
+--- a/tests/adb/capture-envelope-audit.test.ts
++++ b/tests/adb/capture-envelope-audit.test.ts
+@@ -82,4 +82,4 @@ it("keeps unchanged-source full-workflow gates strict under adversarial reports"
+     expect(r.fullWorkflowAcceptance).toBe(i < 0 ? "pass" : "open");
+     if (i >= 0) expect(r.workflowDelta).toBeNull();
+   }
+-}, 20000);
++}, 60_000);
 diff --git a/tests/integration/extension-load.test.ts b/tests/integration/extension-load.test.ts
 index 21f0c86eea4374f435b2b6efd091cefcc63beea5..e4c7356e632c6be79510ba5ed597d55c4701cece 100644
 --- a/tests/integration/extension-load.test.ts

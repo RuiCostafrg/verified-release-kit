@@ -34,9 +34,13 @@ Rollup's native dependency on this machine. The
 current sources and loads `dist/index.js`, the entry point declared by
 the package. All seven extension tests passed on Linux Node 26 after
 that change. The sandbox install test now bounds its npm subprocesses
-and packs into its own temporary directory. The migration patch also accepts
+and packs into its own temporary directory. The capture-audit test also
+passed after increasing its fixture deadline from 20 to 60 seconds. The
+migration patch accepts
 `PI_DROID_TEST_TIMEOUT_MS` for slow machines and preserves the default
-30-second deadline. Full-suite results are tracked below.
+30-second deadline. The full Pi Droid suite remains unverified. Parallel
+runs hit fixture deadlines, while serial retries passed all UI dump and
+read/select/tap cases.
 Fantastic Pi Mobile's bridge suite passed 67 of 69 tests before and
 after the patch on this machine. The same test in
 `bridge/test/review.test.js` failed with “Session is closed” in both runs.
@@ -55,8 +59,9 @@ Forge iOS passed its full Linux stage with Swift 6.1.3. All 43 tests
 and project validation passed. The .NET default stages passed across
 two local runs. The Python suite had three skips, the Rust debug and
 release suites passed, and lint and security passed. TypeScript's lint,
-documentation, package listing and security checks passed. Full release
-checks are outside these local runs.
+documentation, package listing and security checks passed. Its runtime
+suite encountered a failure in the Rust pipeline panic-ordering test.
+Full release checks are outside these local runs.
 
 Apply and test one patch at a time in a disposable checkout of its base.
 For checks that expect a clean Git tree, such as Cargo's package listing,
