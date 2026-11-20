@@ -29,13 +29,17 @@ during checks so generated caches stay out of the worktree.
 The screenshot stage passed eight tests before and after the patch.
 Pi Droid lint, build, and the 25-test ADB intents suite passed on both
 versions with Linux Node 24. The Android build of Node could not load
-Rollup's native dependency on this machine. The full Vitest suite
-still needs a completed run before adoption.
-Fantastic Pi Mobile's original bridge suite passed 67 of 69 tests on
-this machine. Both failures appeared before changing the runner, in
-`bridge/test/review.test.js`. A focused log and reliability run passed
-all three tests in the patched checkout. Recheck the full bridge suite
-on the normal CI toolchain before adopting its patch.
+Rollup's native dependency on this machine. The full Linux Vitest runs
+both stopped making progress after the same test file and still need
+a completed run before adoption.
+Fantastic Pi Mobile's bridge suite passed 67 of 69 tests before and
+after the patch on this machine. The same test in
+`bridge/test/review.test.js` failed with “Session is closed” in both runs.
+A second review test failed on the original runner, and a different
+test timed out in `bridge/test/project-lifecycle.test.js` on the patched
+runner. A focused log and reliability run passed all three tests in the
+patched checkout. Recheck the full bridge suite on the normal CI
+toolchain before adopting its patch.
 Forge iOS's project validator passed without a Swift compiler. The Swift
 stage and Fantastic Pi Mobile's Android stage still need Swift and a
 Java 17/Android SDK setup, respectively. The .NET Python suite ran 249
