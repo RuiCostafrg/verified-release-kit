@@ -47,6 +47,8 @@ together after the sandbox fixture stopped installing Pi's host peer
 dependencies. The sandbox installs the tarball and its own dependencies
 through npm. The isolated extension fixture exercises loading with the
 host dependencies and the package metadata and runtime files in place.
+The final rollout run and a follow-up for the seven unfinished files
+covered all 65 files and 873 tests in `test:ci` successfully.
 Fantastic Pi Mobile's bridge suite passed 67 of 69 tests before and
 after the patch on this machine. The same test in
 `bridge/test/review.test.js` failed with “Session is closed” in both runs.
@@ -80,6 +82,10 @@ checks the destination after the collector exits and before creating
 staging files, while keeping the final pre-publication check. All 11
 coverage configuration tests passed, including both directory-alias
 cases. The full Node suite passed with 125 tests and one skip.
+Final verification also passed all 186 Python tests and 238 Rust tests
+in each of the debug and release profiles, with one Rust test ignored
+in each profile. Lint and docs passed from the committed verification
+checkout.
 Full release checks are outside these local runs.
 
 Apply and test one patch at a time in a disposable checkout of its base.
