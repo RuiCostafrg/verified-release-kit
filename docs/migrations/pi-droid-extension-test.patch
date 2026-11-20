@@ -9,10 +9,10 @@ index 4d3e6d07f658b94a369fe2e2cc1b9a6dae2b4f66..c44a70dcea850a4b8f6a417d672a2e80
 -}, 20000);
 +}, 60_000);
 diff --git a/tests/integration/extension-load.test.ts b/tests/integration/extension-load.test.ts
-index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97acc1a42eb 100644
+index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8f902a3c45d31a08a4fc2da9bf96a956ea66d93d 100644
 --- a/tests/integration/extension-load.test.ts
 +++ b/tests/integration/extension-load.test.ts
-@@ -5,15 +5,30 @@
+@@ -5,15 +5,32 @@
   * extension. ADB tools are mocked — no physical device needed.
   */
 
@@ -22,7 +22,7 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97a
  import type { TestSession } from "@marcfargas/pi-test-harness";
 -import { join } from "path";
 +import { execFile } from "node:child_process";
-+import { mkdtemp, rm, symlink } from "node:fs/promises";
++import { cp, mkdtemp, rm } from "node:fs/promises";
 +import { promisify } from "node:util";
 +import { join } from "node:path";
  import { patchAgentForHarness } from "./harness-patch.js";
@@ -39,7 +39,9 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97a
 +  // Keep this build separate from npm pack fixtures using the checkout dist/.
 +  fixtureRoot = await mkdtemp(join(ROOT, ".extension-test-"));
 +  const dist = join(fixtureRoot, "dist");
-+  await symlink(join(ROOT, "config"), join(fixtureRoot, "config"), "junction");
++  for (const name of ["package.json", "config", "skills"]) {
++    await cp(join(ROOT, name), join(fixtureRoot, name), { recursive: true });
++  }
 +  await exec(process.execPath, [join(ROOT, "node_modules/typescript/bin/tsc"), "--outDir", dist], {
 +    cwd: ROOT,
 +    timeout: 120_000,
@@ -48,7 +50,7 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97a
    patchAgentForHarness();
    // The harness replaces the stream function so no real LLM calls happen,
    // but the session validates API key presence before delegating to the agent.
-@@ -21,6 +36,10 @@ beforeAll(() => {
+@@ -21,6 +38,10 @@ beforeAll(() => {
    if (!process.env.OPENAI_API_KEY) {
      process.env.OPENAI_API_KEY = "test-key-not-used";
    }
@@ -59,7 +61,7 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97a
  });
 
  /** Minimal mock responses for ADB tools so the extension loads cleanly. */
-@@ -99,7 +118,7 @@ describe("Extension loading", () => {
+@@ -99,7 +120,7 @@ describe("Extension loading", () => {
 
    it("loads extension and registers all tools", async () => {
      t = await createTestSession({
@@ -68,7 +70,7 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97a
        mockTools: ADB_MOCKS,
        mockUI: { confirm: true },
        propagateErrors: true,
-@@ -121,7 +140,7 @@ describe("Extension loading", () => {
+@@ -121,7 +142,7 @@ describe("Extension loading", () => {
 
    it("handles multi-tool perception sequence", async () => {
      t = await createTestSession({
@@ -77,7 +79,7 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97a
        mockTools: ADB_MOCKS,
        mockUI: { confirm: true },
        propagateErrors: true,
-@@ -146,7 +165,7 @@ describe("Extension loading", () => {
+@@ -146,7 +167,7 @@ describe("Extension loading", () => {
 
    it("exercises tap and type tools", async () => {
      t = await createTestSession({
@@ -86,7 +88,7 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97a
        mockTools: ADB_MOCKS,
        mockUI: { confirm: true },
        propagateErrors: true,
-@@ -177,7 +196,7 @@ describe("Multi-turn conversations", () => {
+@@ -177,7 +198,7 @@ describe("Multi-turn conversations", () => {
 
    it("maintains session state across turns", async () => {
      t = await createTestSession({
@@ -95,7 +97,7 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97a
        mockTools: ADB_MOCKS,
        mockUI: { confirm: true },
        propagateErrors: true,
-@@ -211,7 +230,7 @@ describe("Plugin tools", () => {
+@@ -211,7 +232,7 @@ describe("Plugin tools", () => {
 
    it("calls plugin status tool", async () => {
      t = await createTestSession({
@@ -104,7 +106,7 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97a
        mockTools: ADB_MOCKS,
        mockUI: { confirm: true },
        propagateErrors: true,
-@@ -229,7 +248,7 @@ describe("Plugin tools", () => {
+@@ -229,7 +250,7 @@ describe("Plugin tools", () => {
 
    it("calls skills discovery tool", async () => {
      t = await createTestSession({
@@ -113,7 +115,7 @@ index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97a
        mockTools: ADB_MOCKS,
        mockUI: { confirm: true },
        propagateErrors: true,
-@@ -256,7 +275,7 @@ describe("Account tools", () => {
+@@ -256,7 +277,7 @@ describe("Account tools", () => {
 
    it("lists accounts", async () => {
      t = await createTestSession({
