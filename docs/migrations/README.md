@@ -38,9 +38,13 @@ and packs into its own temporary directory. The capture-audit test also
 passed after increasing its fixture deadline from 20 to 60 seconds. The
 migration patch accepts
 `PI_DROID_TEST_TIMEOUT_MS` for slow machines and preserves the default
-30-second deadline. The full Pi Droid suite remains unverified. Parallel
-runs hit fixture deadlines, while serial retries passed all UI dump and
-read/select/tap cases.
+30-second deadline. All 63 unit-test files passed across batches and
+serial retries, covering 864 tests. Eight of nine integration checks
+passed in the last run. The package install satisfied the assertions
+once, but that run had a Vitest worker error. Switching npm subprocesses
+to asynchronous execution removed the worker error in the next run,
+which hit the package-install test deadline. A clean pass for that test
+still needs confirmation.
 Fantastic Pi Mobile's bridge suite passed 67 of 69 tests before and
 after the patch on this machine. The same test in
 `bridge/test/review.test.js` failed with “Session is closed” in both runs.
@@ -53,14 +57,23 @@ The [bridge test patch](fantastic-pi-mobile-bridge-tests.patch) makes the
 snapshot test wait for a terminal state and joins its pending read
 before closing the store. It also gives the routing fixture a bounded
 elapsed-time deadline. Both cases passed in the Linux Node 26 full rerun,
-which still hit its overall timeout before the review file finished.
+which hit its overall timeout before the review file finished. The review
+file then passed all 18 tests on its own. Together the two runs covered
+all 69 bridge tests successfully.
+Fantastic Pi Mobile's Android stage passed with Java 17, Android SDK 35,
+and the local ARM64 AAPT2. It built the debug APK, passed lint, and ran
+all 22 unit tests successfully.
 
 Forge iOS passed its full Linux stage with Swift 6.1.3. All 43 tests
 and project validation passed. The .NET default stages passed across
 two local runs. The Python suite had three skips, the Rust debug and
 release suites passed, and lint and security passed. TypeScript's lint,
 documentation, package listing and security checks passed. Its runtime
-suite encountered a failure in the Rust pipeline panic-ordering test.
+suite hit the Rust pipeline panic-ordering test's deadline under load.
+That test passed by itself and in a serial run. The serial run later
+failed two Node coverage-config assertions because directory aliases
+returned `ELOOP`. The same failures reproduced on the original checkout
+and when using a different temporary directory on this machine.
 Full release checks are outside these local runs.
 
 Apply and test one patch at a time in a disposable checkout of its base.
