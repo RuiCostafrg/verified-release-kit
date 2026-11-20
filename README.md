@@ -9,6 +9,7 @@ repositories.
 - [Runner usage and stage contract](docs/local-ci.md)
 - [Consumption recommendation](docs/consumption.md)
 - [Pilot migration](docs/pilot/README.md)
+- [Local rollout patches](docs/migrations/README.md)
 - [Homebrew sync proposal](docs/homebrew-sync-proposal.md)
 - [Release verification survey](docs/release-verification.md)
 

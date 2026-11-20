@@ -95,9 +95,15 @@ patch is not pushed.
 - Creating a GitHub repository for this kit.
 - Changing release or tap workflows.
 
+## Local rollout after the pilot
+
+Prepared [migration patches](docs/migrations/README.md) for the other seven
+runner consumers. The patches cover local CI and are ready for review
+against their recorded base commits.
+
 ## Decisions for the owner
 
-1. Whether to roll out vendoring beyond the pilot.
+1. When to adopt the prepared patches in the live repositories.
 2. Whether to land the stranded review fixes now, repository by repository,
    before any migration.
 3. Final name and whether this becomes a public repository.
