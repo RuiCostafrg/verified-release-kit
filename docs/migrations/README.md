@@ -47,7 +47,9 @@ passed in the last run. The package install satisfied the assertions
 once, but that run had a Vitest worker error. Switching npm subprocesses
 to asynchronous execution removed the worker error in the next run,
 which hit the package-install test deadline. A clean pass for that test
-still needs confirmation.
+still needs confirmation. The post-review offline retry also timed out
+on the install test. The final isolated extension fixture passed all
+seven tests with the package metadata and runtime files in place.
 Fantastic Pi Mobile's bridge suite passed 67 of 69 tests before and
 after the patch on this machine. The same test in
 `bridge/test/review.test.js` failed with “Session is closed” in both runs.
@@ -63,6 +65,8 @@ elapsed-time deadline. Both cases passed in the Linux Node 26 full rerun,
 which hit its overall timeout before the review file finished. The review
 file then passed all 18 tests on its own. Together the two runs covered
 all 69 bridge tests successfully.
+After the review fix, one complete Linux Node 24 run passed all 69
+bridge tests with zero failures or cancellations.
 Fantastic Pi Mobile's Android stage passed with Java 17, Android SDK 35,
 and the local ARM64 AAPT2. It built the debug APK, passed lint, and ran
 all 22 unit tests successfully.
