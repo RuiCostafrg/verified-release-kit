@@ -36,8 +36,10 @@ Rules the runner enforces at start-up, before anything slow runs:
 
 Available inside stages and `prepare`: `_fail`, `_log`, `_ok`, `_warn`,
 `require <cmd> [hint]`, `node_min <major>`. Each stage runs in a subshell with
-`errexit`. A failing command anywhere in it fails the stage, and a `cd` or a
-variable set in one stage does not leak into the next. `prepare` runs in the
+`errexit`. An unhandled failure ends the stage, subject to Bash exceptions
+for conditions and short-circuit lists. Split declaration and command
+substitution into separate commands so the assignment exposes failures. A
+`cd` or variable set in one stage does not leak into the next. `prepare` runs in the
 runner's own shell, so it can `export` environment for the stages.
 
 ### Extra options

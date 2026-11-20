@@ -12,7 +12,7 @@ The patches change local CI files only.
 | pi-android-screenshots | `b501b0b118a467a241c316f35c8ad6c68455f69e` | [Patch](pi-android-screenshots.patch) |
 | pi-droid | `b803a78984aacd89ea9b66beae157560c21a041d` | [Patch](pi-droid.patch) |
 | fantastic-pi-mobile | `dbd2bca17f80e5f190e9b5553904983beba63623` | [Patch](fantastic-pi-mobile.patch) |
-| forge-ios | `f1f91f0560dda9dc6a5e7a1a3745f473847827` | [Patch](forge-ios.patch) |
+| forge-ios | `f1f91f0560dda9dc6a5e7a7a1a3745f473847827` | [Patch](forge-ios.patch) |
 | forge-android | `30abecf2d3638d257c910b18233ab9b6664c5b1a` | [Patch](forge-android.patch) |
 | dotnet-crap | `87f4e19ec16c06a63c94495e5e0cce4e62bdd2b2` | [Patch](dotnet-crap.patch) |
 | typescript-crap | `8798a99a0fabb92365cec0fe34f1bee4cba9a6f5` | [Patch](typescript-crap.patch) |
@@ -32,7 +32,10 @@ versions with Linux Node 24. The Android build of Node could not load
 Rollup's native dependency on this machine. The
 [integration test patch](pi-droid-extension-test.patch) builds from the
 current sources and loads `dist/index.js`, the entry point declared by
-the package. All seven extension tests passed on Linux Node 26 after
+the package, in an isolated directory so the package test can rebuild
+the checkout's `dist/` in parallel. Individual build hooks and pack
+checks have outer deadlines longer than their subprocess deadlines.
+All seven extension tests passed on Linux Node 26 after
 that change. The sandbox install test now bounds its npm subprocesses
 and packs into its own temporary directory. The capture-audit test also
 passed after increasing its fixture deadline from 20 to 60 seconds. The

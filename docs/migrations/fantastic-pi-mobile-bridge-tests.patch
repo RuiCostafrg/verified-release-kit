@@ -18,10 +18,10 @@ index 611fc7b715e9c0e5d714a1ffeb84fad1ec50f8e5..ce25a961889dc19c5422d5ed5576919e
  }
 
 diff --git a/bridge/test/review.test.js b/bridge/test/review.test.js
-index ccdb6587a2e6718fab83bba28b9e277e2935a590..0a1e10b933f62f4343af977b2fbc42c7c8e3606d 100644
+index ccdb6587a2e6718fab83bba28b9e277e2935a590..25808bed2b01527cb95dbf430b3d623d9a9e9753 100644
 --- a/bridge/test/review.test.js
 +++ b/bridge/test/review.test.js
-@@ -214,12 +214,20 @@ test('actions completing during a Changes snapshot require an automatic fresh re
+@@ -214,12 +214,22 @@ test('actions completing during a Changes snapshot require an automatic fresh re
      return value;
    } };
    const store = await openStore({ ...options, reviewActions });
@@ -31,7 +31,9 @@ index ccdb6587a2e6718fab83bba28b9e277e2935a590..0a1e10b933f62f4343af977b2fbc42c7
    try {
 -    const firstRead = store.changes('chat');
 -    const old = await captured;
-+    const old = await Promise.race([captured, firstRead]);
++    const old = await Promise.race([captured, firstRead.then(() => {
++      throw new Error('Changes read completed without reaching the snapshot gate');
++    })]);
      await store.reviewAction('chat', { operationId: 'during-snapshot-action', action: 'test', revision: old.revision, command: 'true' });
 -    for (let i = 0; i < 200 && (await store.getReview('chat', 'during-snapshot-action')).status !== 'done'; i++) await new Promise(r => setTimeout(r, 10));
 -    assert.equal((await store.getReview('chat', 'during-snapshot-action')).status, 'done');
@@ -46,7 +48,7 @@ index ccdb6587a2e6718fab83bba28b9e277e2935a590..0a1e10b933f62f4343af977b2fbc42c7
      release();
      const mixed = await firstRead;
      assert.equal(mixed.operation.status, 'done');
-@@ -227,7 +235,7 @@ test('actions completing during a Changes snapshot require an automatic fresh re
+@@ -227,7 +237,7 @@ test('actions completing during a Changes snapshot require an automatic fresh re
      assert.equal(mixed.repositoryBusy, true);
      const fresh = await store.changes('chat');
      assert.equal(fresh.refreshRequired, false); assert.equal(fresh.repositoryBusy, false);

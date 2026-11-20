@@ -1,15 +1,16 @@
 diff --git a/docs/local-ci.md b/docs/local-ci.md
-index 4e694526ed2885690d2de96e252c8bc0454f45a1..34e0e6f0602e18fcaf93e601f6802a6159fad2cc 100644
+index 4e694526ed2885690d2de96e252c8bc0454f45a1..306587b1d9548edbf85d9a24f0831ca707e006c2 100644
 --- a/docs/local-ci.md
 +++ b/docs/local-ci.md
-@@ -32,6 +32,11 @@ a red `signoff/<stage>` status automatically. Each status (green or red) is boun
+@@ -32,6 +32,12 @@ a red `signoff/<stage>` status automatically. Each status (green or red) is boun
  with `--commit` to the exact commit captured at the start of its stage, so a
  commit or push landing mid-run can never be green-lit for code it did not test.
 
 +The runner and checksum are vendored from verified-release-kit. The checks
 +for this repository live in `scripts/local-ci.stages.sh`. Signoff requires
 +a clean checkout and uses the exact commit tested. Use `--no-signoff`
-+to run the checks on local edits.
++to run most checks on local edits. Cargo package listing still requires a
++clean checkout, so commit or stash local edits before running `lint`.
 +
  ## Optional: make sign-off a merge requirement
 

@@ -9,37 +9,121 @@ index 4d3e6d07f658b94a369fe2e2cc1b9a6dae2b4f66..c44a70dcea850a4b8f6a417d672a2e80
 -}, 20000);
 +}, 60_000);
 diff --git a/tests/integration/extension-load.test.ts b/tests/integration/extension-load.test.ts
-index 21f0c86eea4374f435b2b6efd091cefcc63beea5..5d530ee086744dd004a6c8bfade3319b46198597 100644
+index 21f0c86eea4374f435b2b6efd091cefcc63beea5..8c2d54e11695e1c8b4a3fd612b16a97acc1a42eb 100644
 --- a/tests/integration/extension-load.test.ts
 +++ b/tests/integration/extension-load.test.ts
-@@ -8,12 +8,22 @@
- import { describe, it, expect, afterEach, beforeAll } from "vitest";
+@@ -5,15 +5,30 @@
+  * extension. ADB tools are mocked — no physical device needed.
+  */
+
+-import { describe, it, expect, afterEach, beforeAll } from "vitest";
++import { describe, it, expect, afterAll, afterEach, beforeAll } from "vitest";
  import { createTestSession, when, calls, says } from "@marcfargas/pi-test-harness";
  import type { TestSession } from "@marcfargas/pi-test-harness";
 -import { join } from "path";
 +import { execFile } from "node:child_process";
++import { mkdtemp, rm, symlink } from "node:fs/promises";
 +import { promisify } from "node:util";
 +import { join } from "node:path";
  import { patchAgentForHarness } from "./harness-patch.js";
 
 -const EXTENSION_PATH = join(import.meta.dirname, "../../src/index.ts");
+-
+-beforeAll(() => {
 +const exec = promisify(execFile);
 +const ROOT = join(import.meta.dirname, "../..");
-+const EXTENSION_PATH = join(ROOT, "dist/index.js");
-
--beforeAll(() => {
++let fixtureRoot: string | undefined;
++let extensionPath: string;
++
 +beforeAll(async () => {
-+  // Compile current sources even when the test is run without the build stage.
-+  // Load the same entry point Pi uses when the package is installed.
-+  await exec(process.execPath, [join(ROOT, "node_modules/typescript/bin/tsc")], {
++  // Keep this build separate from npm pack fixtures using the checkout dist/.
++  fixtureRoot = await mkdtemp(join(ROOT, ".extension-test-"));
++  const dist = join(fixtureRoot, "dist");
++  await symlink(join(ROOT, "config"), join(fixtureRoot, "config"), "junction");
++  await exec(process.execPath, [join(ROOT, "node_modules/typescript/bin/tsc"), "--outDir", dist], {
 +    cwd: ROOT,
-+    timeout: 60_000,
++    timeout: 120_000,
 +  });
++  extensionPath = join(dist, "index.js");
    patchAgentForHarness();
    // The harness replaces the stream function so no real LLM calls happen,
    // but the session validates API key presence before delegating to the agent.
+@@ -21,6 +36,10 @@ beforeAll(() => {
+   if (!process.env.OPENAI_API_KEY) {
+     process.env.OPENAI_API_KEY = "test-key-not-used";
+   }
++}, 135_000);
++
++afterAll(async () => {
++  if (fixtureRoot) await rm(fixtureRoot, { recursive: true, force: true });
+ });
+
+ /** Minimal mock responses for ADB tools so the extension loads cleanly. */
+@@ -99,7 +118,7 @@ describe("Extension loading", () => {
+
+   it("loads extension and registers all tools", async () => {
+     t = await createTestSession({
+-      extensions: [EXTENSION_PATH],
++      extensions: [extensionPath],
+       mockTools: ADB_MOCKS,
+       mockUI: { confirm: true },
+       propagateErrors: true,
+@@ -121,7 +140,7 @@ describe("Extension loading", () => {
+
+   it("handles multi-tool perception sequence", async () => {
+     t = await createTestSession({
+-      extensions: [EXTENSION_PATH],
++      extensions: [extensionPath],
+       mockTools: ADB_MOCKS,
+       mockUI: { confirm: true },
+       propagateErrors: true,
+@@ -146,7 +165,7 @@ describe("Extension loading", () => {
+
+   it("exercises tap and type tools", async () => {
+     t = await createTestSession({
+-      extensions: [EXTENSION_PATH],
++      extensions: [extensionPath],
+       mockTools: ADB_MOCKS,
+       mockUI: { confirm: true },
+       propagateErrors: true,
+@@ -177,7 +196,7 @@ describe("Multi-turn conversations", () => {
+
+   it("maintains session state across turns", async () => {
+     t = await createTestSession({
+-      extensions: [EXTENSION_PATH],
++      extensions: [extensionPath],
+       mockTools: ADB_MOCKS,
+       mockUI: { confirm: true },
+       propagateErrors: true,
+@@ -211,7 +230,7 @@ describe("Plugin tools", () => {
+
+   it("calls plugin status tool", async () => {
+     t = await createTestSession({
+-      extensions: [EXTENSION_PATH],
++      extensions: [extensionPath],
+       mockTools: ADB_MOCKS,
+       mockUI: { confirm: true },
+       propagateErrors: true,
+@@ -229,7 +248,7 @@ describe("Plugin tools", () => {
+
+   it("calls skills discovery tool", async () => {
+     t = await createTestSession({
+-      extensions: [EXTENSION_PATH],
++      extensions: [extensionPath],
+       mockTools: ADB_MOCKS,
+       mockUI: { confirm: true },
+       propagateErrors: true,
+@@ -256,7 +275,7 @@ describe("Account tools", () => {
+
+   it("lists accounts", async () => {
+     t = await createTestSession({
+-      extensions: [EXTENSION_PATH],
++      extensions: [extensionPath],
+       mockTools: ADB_MOCKS,
+       mockUI: { confirm: true },
+       propagateErrors: true,
 diff --git a/tests/integration/sandbox-install.test.ts b/tests/integration/sandbox-install.test.ts
-index 4b28e65e16ea3ef2347529a535aee4e504f01f17..0b8a0a0c354194f81c827ab85e2a405e1e50aa9b 100644
+index 4b28e65e16ea3ef2347529a535aee4e504f01f17..d4d82f282a3436287779902f2e926aef0a14562a 100644
 --- a/tests/integration/sandbox-install.test.ts
 +++ b/tests/integration/sandbox-install.test.ts
 @@ -7,29 +7,32 @@
@@ -68,8 +152,9 @@ index 4b28e65e16ea3ef2347529a535aee4e504f01f17..0b8a0a0c354194f81c827ab85e2a405e
 +beforeAll(async () => {
    // Ensure dist/ is fresh before packing
 -  execSync("npm run build", { cwd: PACKAGE_DIR, stdio: "pipe" });
-+  await exec("npm", ["run", "build"], { cwd: PACKAGE_DIR, timeout: 60_000 });
- });
+-});
++  await exec("npm", ["run", "build"], { cwd: PACKAGE_DIR, timeout: 120_000 });
++}, 135_000);
 
  describe("Sandbox install verification", () => {
 -  it("npm pack produces a valid tarball", () => {
@@ -82,10 +167,12 @@ index 4b28e65e16ea3ef2347529a535aee4e504f01f17..0b8a0a0c354194f81c827ab85e2a405e
      });
      // Verify key files are present
      expect(output).toContain("dist/index.js");
-@@ -50,18 +53,15 @@ describe("Sandbox install verification", () => {
+@@ -48,20 +51,17 @@ describe("Sandbox install verification", () => {
+     expect(output).not.toContain("tests/");
+     expect(output).not.toContain(".claude/");
      expect(output).not.toContain(".png");
-   });
-
+-  });
+-
 -  it("installs cleanly in a sandbox", () => {
 -    // Pack
 -    const tarball = execSync("npm pack", {
@@ -93,7 +180,8 @@ index 4b28e65e16ea3ef2347529a535aee4e504f01f17..0b8a0a0c354194f81c827ab85e2a405e
 -      encoding: "utf-8",
 -    }).trim().split("\n").pop()!.trim();
 -    const tarballPath = join(PACKAGE_DIR, tarball);
--
++  }, 55_000);
+
 +  it("installs cleanly in a sandbox", async () => {
      const sandbox = mkdtempSync(join(tmpdir(), "pi-droid-sandbox-"));
      try {
