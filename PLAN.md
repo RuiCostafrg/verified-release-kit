@@ -92,7 +92,6 @@ patch is not pushed.
 ## Out of scope
 
 - Pushing to, or opening pull requests against, any existing repository.
-- Creating a GitHub repository for this kit.
 - Changing release or tap workflows.
 
 ## Local rollout after the pilot
@@ -101,9 +100,18 @@ Prepared [migration patches](docs/migrations/README.md) for the other seven
 runner consumers. The patches cover local CI and are ready for review
 against their recorded base commits.
 
+## Verification after publishing
+
+On 2026-11-21 all 39 runner tests passed. The drift probes were rerun
+against fresh clones at the inventory commits, with gh-signoff
+`02e0cf9`. The output matched the recorded results, except for the random
+commit IDs of the fixture repositories.
+
 ## Decisions for the owner
 
 1. When to adopt the prepared patches in the live repositories.
 2. Whether to land the stranded review fixes now, repository by repository,
    before any migration.
-3. Final name and whether this becomes a public repository.
+3. Final name, and whether the private repository becomes public. On
+   2026-11-21 the owner had it published as the private repository
+   `RuiCostafrg/verified-release-kit`.
