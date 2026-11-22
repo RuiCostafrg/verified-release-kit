@@ -91,8 +91,7 @@ patch is not pushed.
 
 ## Out of scope
 
-- Pushing to, or opening pull requests against, any existing repository.
-- Changing release or tap workflows.
+- Changing the live tap sync jobs before a shadow run matches them.
 
 ## Local rollout after the pilot
 
@@ -107,11 +106,13 @@ against fresh clones at the inventory commits, with gh-signoff
 `02e0cf9`. The output matched the recorded results, except for the random
 commit IDs of the fixture repositories.
 
-## Decisions for the owner
+## Decisions
 
-1. When to adopt the prepared patches in the live repositories.
-2. Whether to land the stranded review fixes now, repository by repository,
-   before any migration.
-3. Final name, and whether the private repository becomes public. On
-   2026-11-21 the owner had it published as the private repository
-   `RuiCostafrg/verified-release-kit`.
+1. Patch adoption: done 2026-11-22. All eight consumers merged the shared
+   runner after green CI, and `vendor-local-ci.sh check` reports all eight in
+   sync.
+2. Stranded fixes: superseded. Every stranded commit was a runner fix that
+   the shared runner already contains, so the migrations replaced them.
+3. Name and visibility: decided 2026-11-22. The name stays
+   `verified-release-kit`, and the repository is public, because the public
+   `homebrew-tap` can only call reusable workflows from public repositories.

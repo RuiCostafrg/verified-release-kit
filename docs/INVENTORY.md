@@ -27,9 +27,9 @@ The other eight tips match the table. The line references in the drift
 report therefore also apply at the refresh date.
 
 The local checkouts were read with `--no-optional-locks` and not changed.
-`/root/.t3/projects/typescript-crap` and `/root/.t3/projects/dotnet-crap` hold
-the same `local-ci.sh` bytes as their `origin/main`. `/root/fantastic-pi-mobile`
-is on `feat/shared-conversation-core`, which branched before the script was
+The local typescript-crap and dotnet-crap checkouts hold
+the same `local-ci.sh` bytes as their `origin/main`. The local fantastic-pi-mobile
+checkout is on `feat/shared-conversation-core`, which branched before the script was
 added and has no copy.
 
 Drift that looks like bugs is in [DRIFT.md](DRIFT.md). This file covers what
