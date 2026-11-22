@@ -1,0 +1,103 @@
+name: Verify Homebrew formula
+
+# Read-only provenance verification for a Homebrew formula release. The caller
+# keeps every write (branch, PR, CI dispatch) behind its own approval.
+# See docs/homebrew-sync-proposal.md.
+on:
+  workflow_call:
+    inputs:
+      source-repository:
+        description: Repository that publishes the release, as owner/name
+        type: string
+        required: true
+      workflow-path:
+        description: Attesting workflow path, e.g. .github/workflows/release.yml
+        type: string
+        required: true
+      formula:
+        description: Formula name; the asset is <formula>.rb
+        type: string
+        required: true
+      allow-bootstrap:
+        description: Treat no release, or no tap formula yet, as a no-op or first sync
+        type: boolean
+        required: false
+        default: false
+      base-branch:
+        description: Tap branch holding the current formula
+        type: string
+        required: false
+        default: main
+    outputs:
+      candidate:
+        description: "true when a verified, newer formula is ready to publish"
+        value: ${{ jobs.verify.outputs.candidate }}
+      tag:
+        description: Verified release tag
+        value: ${{ jobs.verify.outputs.tag }}
+      source-sha:
+        description: Source commit the tag resolves to
+        value: ${{ jobs.verify.outputs.source-sha }}
+      formula-sha256:
+        description: SHA-256 of the verified formula
+        value: ${{ jobs.verify.outputs.formula-sha256 }}
+      artifact-id:
+        description: ID of the same-run artifact holding the verified formula
+        value: ${{ jobs.verify.outputs.artifact-id }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    # The caller must grant at least these; a called workflow cannot raise them.
+    permissions:
+      contents: read
+      pull-requests: read
+      attestations: read
+      actions: read
+    outputs:
+      candidate: ${{ steps.verify.outputs.candidate }}
+      tag: ${{ steps.verify.outputs.tag }}
+      source-sha: ${{ steps.verify.outputs.source-sha }}
+      formula-sha256: ${{ steps.verify.outputs.formula-sha256 }}
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      # A called workflow has no context for its own commit, so ask the run which
+      # commit of this workflow the caller pinned, then check out that commit.
+      - name: Find the pinned kit commit
+        id: kit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          [[ "$RUN_ID" =~ ^[0-9]+$ ]] || { echo 'invalid run id' >&2; exit 1; }
+          shas=$(gh api "repos/$CALLER_REPOSITORY/actions/runs/$RUN_ID" \
+            --jq '[.referenced_workflows[]? | select(.path | startswith("RuiCostafrg/verified-release-kit/.github/workflows/verify-homebrew-formula.yml@")) | .sha] | unique | .[]')
+          [[ "$shas" =~ ^[0-9a-f]{40}$ ]] || { echo 'cannot determine a single pinned kit commit' >&2; exit 1; }
+          echo "sha=$shas" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: RuiCostafrg/verified-release-kit
+          ref: ${{ steps.kit.outputs.sha }}
+          path: kit
+          persist-credentials: false
+      - name: Verify formula provenance and source identity
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REPOSITORY: ${{ inputs.source-repository }}
+          WORKFLOW_PATH: ${{ inputs.workflow-path }}
+          FORMULA: ${{ inputs.formula }}
+          ALLOW_BOOTSTRAP: ${{ inputs.allow-bootstrap }}
+          BASE_BRANCH: ${{ inputs.base-branch }}
+        run: bash kit/scripts/verify-homebrew-formula.sh
+      - name: Upload the verified formula
+        id: upload
+        if: steps.verify.outputs.candidate == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ steps.verify.outputs.artifact-name }}
+          path: ${{ steps.verify.outputs.formula-path }}
+          if-no-files-found: error
+          retention-days: 7

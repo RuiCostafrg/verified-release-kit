@@ -103,3 +103,24 @@ candidate sandbox and source identity checks. Review private source
 attestation access and environment approval support before treating that
 tap as an adopter. Its source metadata and tarball identity are a separate
 distribution contract.
+
+## Implementation
+
+- `.github/workflows/verify-homebrew-formula.yml`: the `workflow_call`
+  workflow. Inputs are `source-repository`, `workflow-path`, `formula`,
+  `allow-bootstrap` and `base-branch`. Outputs are `candidate`, `tag`,
+  `source-sha`, `formula-sha256` and `artifact-id`. It has read permissions
+  only, and all actions are pinned by commit SHA.
+- `scripts/verify-homebrew-formula.sh`: the verification logic. It validates
+  every input, reads only through `gh`, and fails closed. It runs locally with
+  the environment variables listed in its header.
+- `tests/verify-homebrew-formula.test.sh`: offline tests using a fake `gh` and
+  real temporary git repositories. Run `bash tests/verify-homebrew-formula.test.sh`.
+- `docs/adoption/homebrew-tap-verify-shadow.yml`: a read-only,
+  `workflow_dispatch`-only caller for the tap that runs both formulas and
+  writes the results to the job summary. Replace `<KIT_SHA>` before use.
+
+A called workflow cannot see its own commit, so the workflow asks the caller's
+run (`referenced_workflows`) for the pinned commit and checks out the script
+from it. This is why callers must also grant `actions: read` and
+`attestations: read`.
