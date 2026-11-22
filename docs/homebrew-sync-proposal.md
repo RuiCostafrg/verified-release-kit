@@ -124,3 +124,27 @@ A called workflow cannot see its own commit, so the workflow asks the caller's
 run (`referenced_workflows`) for the pinned commit and checks out the script
 from it. This is why callers must also grant `actions: read` and
 `attestations: read`.
+
+## Shadow run
+
+On 2026-11-22, `homebrew-tap` merged `.github/workflows/verify-shadow.yml`
+(PR #28). That file pins this workflow to `d92313f`. Shadow run 45023559119
+succeeded. GitHub reported the pin as `d92313f…` in `referenced_workflows`,
+and the step that finds the pinned commit accepted it. Both formulas reported
+no candidate (`ts-crap` 3.0.0 and `dotnet-crap` 0.2.2 are current). That
+matches the latest scheduled `sync.yml` run 44995580014, where both verify jobs
+passed and both publish jobs were skipped.
+
+The candidate path was exercised read-only against the real releases using
+older tap base commits. The verified SHA-256 of each formula matched the
+formula the live sync had published:
+
+- `ts-crap` v3.0.0: `f5196763…`
+- `dotnet-crap` v0.2.2: `8e9949ac…`
+
+A wrong workflow identity was rejected.
+
+Next step, not yet taken: on the next real release, compare the shadow
+candidate with the live `verify` job's output. Then replace the tap's two
+verify jobs with calls to this workflow, and keep the tap-owned publish jobs
+and the `homebrew` environment.

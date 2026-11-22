@@ -91,7 +91,7 @@ patch is not pushed.
 
 ## Out of scope
 
-- Changing the live tap sync jobs before a shadow run matches them.
+- Replacing the live tap verify jobs before a shadow run matches them on a real new release.
 
 ## Local rollout after the pilot
 
