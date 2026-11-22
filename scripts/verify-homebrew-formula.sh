@@ -93,8 +93,11 @@ semver_gt() { # semver_gt A B: A > B for X.Y.Z
 }
 
 # formula_version FILE: the single declared `  version "X.Y.Z"`, else fail.
+# Any other `version` call at any indentation (inside an `if`, after
+# `__END__`, with parentheses) makes the file ambiguous and fails.
 formula_version() {
   local lines
+  [ "$(grep -cE '^[[:space:]]*version([[:space:](]|$)' -- "$1" || true)" -eq 1 ] || return 1
   lines="$(grep -E '^  version "[0-9]{1,9}\.[0-9]{1,9}\.[0-9]{1,9}"$' -- "$1" || true)"
   [ -n "$lines" ] && [ "$(printf '%s\n' "$lines" | wc -l)" -eq 1 ] || return 1
   sed -E 's/^  version "([^"]+)"$/\1/' <<< "$lines"

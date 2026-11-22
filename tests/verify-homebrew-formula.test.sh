@@ -367,6 +367,22 @@ test_formula_without_a_version_fails() {
   out_has "does not declare exactly one version"
 }
 
+test_second_nested_version_is_rejected() {
+  default_world 1.2.2 1.2.3
+  printf 'class TsCrap < Formula\n  version "1.2.3"\n  if OS.linux?\n    version "9.9.9"\n  end\nend\n' > "$T/asset.rb"
+  run_verify
+  bad_exit; no_candidate
+  out_has "does not declare exactly one version"
+}
+
+test_version_after_end_marker_is_rejected() {
+  default_world 1.2.2 1.2.3
+  printf 'class TsCrap < Formula\n  version "1.2.3"\nend\n__END__\nversion "9.9.9"\n' > "$T/asset.rb"
+  run_verify
+  bad_exit; no_candidate
+  out_has "does not declare exactly one version"
+}
+
 # ── staleness and existing work ──────────────────────────────────────────────
 
 test_older_release_is_not_a_candidate() {

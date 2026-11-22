@@ -73,8 +73,11 @@ jobs:
         run: |
           [[ "$RUN_ID" =~ ^[0-9]+$ ]] || { echo 'invalid run id' >&2; exit 1; }
           shas=$(gh api "repos/$CALLER_REPOSITORY/actions/runs/$RUN_ID" \
-            --jq '[.referenced_workflows[]? | select(.path | startswith("RuiCostafrg/verified-release-kit/.github/workflows/verify-homebrew-formula.yml@")) | .sha] | unique | .[]')
-          [[ "$shas" =~ ^[0-9a-f]{40}$ ]] || { echo 'cannot determine a single pinned kit commit' >&2; exit 1; }
+            --jq '[.referenced_workflows[]? | select(.path | startswith("RuiCostafrg/verified-release-kit/.github/workflows/verify-homebrew-formula.yml@")) | "\(.path | sub(".*@"; ""))=\(.sha)"] | unique | .[]')
+          # The caller must pin a full commit SHA, not a branch or tag that can move.
+          [[ "$shas" =~ ^([0-9a-f]{40})=([0-9a-f]{40})$ ]] && [ "${BASH_REMATCH[1]}" = "${BASH_REMATCH[2]}" ] \
+            || { echo 'the caller must pin this workflow to one full commit SHA' >&2; exit 1; }
+          shas="${BASH_REMATCH[2]}"
           echo "sha=$shas" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
